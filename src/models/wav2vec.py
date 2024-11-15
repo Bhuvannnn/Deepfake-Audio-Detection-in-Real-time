@@ -26,8 +26,16 @@ class DeepfakeDetector(nn.Module):
     
     def forward(self, x):
         # x should be [batch_size, sequence_length]
+        # Print shape for debugging
+        print(f"Input shape: {x.shape}")
+        
+        # Wav2Vec expects input shape [batch_size, sequence_length]
         if x.dim() == 3:  # [batch_size, 1, sequence_length]
             x = x.squeeze(1)
+        elif x.dim() == 1:  # Single sample
+            x = x.unsqueeze(0)
+            
+        print(f"Shape after processing: {x.shape}")
         
         # Get Wav2Vec features
         outputs = self.wav2vec(x)

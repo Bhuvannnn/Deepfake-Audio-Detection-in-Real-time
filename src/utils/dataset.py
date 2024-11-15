@@ -54,11 +54,14 @@ class AudioDataset(Dataset):
             # Normalize
             waveform = waveform / (torch.max(torch.abs(waveform)) + 1e-8)
             
+            # Ensure shape is [fixed_length]
+            waveform = waveform.squeeze()  # Remove any extra dimensions
+            
             return waveform
             
         except Exception as e:
             print(f"Error loading {file_path}: {str(e)}")
-            return torch.zeros((1, self.fixed_length), dtype=torch.float32)
+            return torch.zeros(self.fixed_length, dtype=torch.float32)
     
     def __getitem__(self, idx):
         file_path, label = self.files[idx]
@@ -68,8 +71,10 @@ class AudioDataset(Dataset):
             if self.transform:
                 waveform = self.transform(waveform)
             
-            # Ensure correct shape [sequence_length]
-            waveform = waveform.squeeze(0)
+            # Verify shape is correct
+            if waveform.shape[0] != self.fixed_length:
+                print(f"Warning: Incorrect shape {waveform.shape} for {file_path}")
+                waveform = torch.zeros(self.fixed_length, dtype=torch.float32)
                 
             return waveform, torch.tensor(label, dtype=torch.long)
             
