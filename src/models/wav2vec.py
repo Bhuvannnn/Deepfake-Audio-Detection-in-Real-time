@@ -3,34 +3,43 @@ import torch.nn as nn
 from transformers import Wav2Vec2Model
 
 class DeepfakeDetector(nn.Module):
-    def __init__(self, model_name: str = "facebook/wav2vec2-base"):
+    def __init__(self):
         super().__init__()
-        self.wav2vec = Wav2Vec2Model.from_pretrained(model_name)
         
-        # Custom layers for artifact detection
-        self.artifact_detector = nn.Sequential(
+        # Load pretrained Wav2Vec model
+        self.wav2vec = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base")
+        
+        # Freeze wav2vec parameters (optional)
+        for param in self.wav2vec.parameters():
+            param.requires_grad = False
+        
+        # Custom layers for classification
+        self.classifier = nn.Sequential(
             nn.Linear(768, 256),
             nn.ReLU(),
             nn.Dropout(0.1),
             nn.Linear(256, 64),
             nn.ReLU(),
-            nn.Linear(64, 2)  # Binary classification
+            nn.Dropout(0.1),
+            nn.Linear(64, 2)
         )
-        
+    
     def forward(self, x):
+        # Input shape is [batch_size, sequence_length]
+        # If not in the right shape, reshape it
+        if x.dim() == 3:  # [batch_size, 1, sequence_length]
+            x = x.squeeze(1)
+        elif x.dim() == 4:  # [batch_size, 1, 1, sequence_length]
+            x = x.squeeze(1).squeeze(1)
+            
         # Get Wav2Vec features
-        features = self.wav2vec(x).last_hidden_state
+        outputs = self.wav2vec(x)
+        features = outputs.last_hidden_state
         
         # Pool features (mean pooling)
-        pooled = torch.mean(features, dim=1)
+        features = torch.mean(features, dim=1)
         
-        # Artifact detection
-        output = self.artifact_detector(pooled)
+        # Classification
+        output = self.classifier(features)
         
         return output
-
-    @classmethod
-    def load_from_disk(cls, path: str):
-        model = cls()
-        model.load_state_dict(torch.load(path))
-        return model
