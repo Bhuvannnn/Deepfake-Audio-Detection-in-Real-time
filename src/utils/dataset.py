@@ -18,6 +18,8 @@ class AudioDataset(Dataset):
         # Combine and create labels
         self.files = [(str(f), 0) for f in self.real_files] + \
                     [(str(f), 1) for f in self.fake_files]
+        
+        print(f"Found {len(self.real_files)} real and {len(self.fake_files)} fake audio files")
     
     def load_audio(self, file_path: str):
         try:
@@ -52,24 +54,28 @@ class AudioDataset(Dataset):
             # Normalize
             waveform = waveform / (torch.max(torch.abs(waveform)) + 1e-8)
             
-            return waveform.float()
+            return waveform
             
         except Exception as e:
             print(f"Error loading {file_path}: {str(e)}")
-            return torch.zeros(1, self.fixed_length, dtype=torch.float32)
+            return torch.zeros((1, self.fixed_length), dtype=torch.float32)
     
     def __getitem__(self, idx):
         file_path, label = self.files[idx]
         try:
             waveform = self.load_audio(file_path)
-            # Ensure the shape is [sequence_length]
-            waveform = waveform.squeeze()  # Remove any extra dimensions
             
             if self.transform:
                 waveform = self.transform(waveform)
+            
+            # Ensure correct shape [sequence_length]
+            waveform = waveform.squeeze(0)
                 
             return waveform, torch.tensor(label, dtype=torch.long)
             
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
             return torch.zeros(self.fixed_length, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
+    
+    def __len__(self):
+        return len(self.files)

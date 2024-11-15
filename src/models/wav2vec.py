@@ -25,13 +25,10 @@ class DeepfakeDetector(nn.Module):
         )
     
     def forward(self, x):
-        # Input shape is [batch_size, sequence_length]
-        # If not in the right shape, reshape it
+        # x should be [batch_size, sequence_length]
         if x.dim() == 3:  # [batch_size, 1, sequence_length]
             x = x.squeeze(1)
-        elif x.dim() == 4:  # [batch_size, 1, 1, sequence_length]
-            x = x.squeeze(1).squeeze(1)
-            
+        
         # Get Wav2Vec features
         outputs = self.wav2vec(x)
         features = outputs.last_hidden_state
