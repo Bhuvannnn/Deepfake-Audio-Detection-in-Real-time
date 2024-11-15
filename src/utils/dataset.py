@@ -12,6 +12,7 @@ class AudioDataset(Dataset):
             max_duration: Maximum duration in seconds for audio clips
         """
         self.data_dir = Path(data_dir)
+        self.duration = duration
         self.sample_rate = 16000  # Fixed sample rate
         self.max_length = self.sample_rate * duration  # Convert seconds to samples
         
