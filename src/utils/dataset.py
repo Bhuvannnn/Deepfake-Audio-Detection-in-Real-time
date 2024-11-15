@@ -54,10 +54,14 @@ class AudioDataset(Dataset):
             # Normalize
             waveform = waveform / (torch.max(torch.abs(waveform)) + 1e-8)
             
-            # Ensure shape is [fixed_length]
-            waveform = waveform.squeeze()  # Remove any extra dimensions
+            # Ensure shape is [fixed_length] by removing all extra dimensions
+            waveform = waveform.squeeze()
             
-            return waveform
+            # If squeeze removed too many dimensions, add one back
+            if waveform.dim() == 1:
+                return waveform  # Return as [fixed_length]
+            else:
+                return waveform.reshape(self.fixed_length)  # Force correct shape
             
         except Exception as e:
             print(f"Error loading {file_path}: {str(e)}")
@@ -71,10 +75,10 @@ class AudioDataset(Dataset):
             if self.transform:
                 waveform = self.transform(waveform)
             
-            # Verify shape is correct
-            if waveform.shape[0] != self.fixed_length:
-                print(f"Warning: Incorrect shape {waveform.shape} for {file_path}")
-                waveform = torch.zeros(self.fixed_length, dtype=torch.float32)
+            # Double check the shape is correct
+            if waveform.shape != torch.Size([self.fixed_length]):
+                print(f"Fixing shape from {waveform.shape} to [{self.fixed_length}]")
+                waveform = waveform.reshape(self.fixed_length)
                 
             return waveform, torch.tensor(label, dtype=torch.long)
             
@@ -84,3 +88,23 @@ class AudioDataset(Dataset):
     
     def __len__(self):
         return len(self.files)
+
+def verify_dataset_shapes(dataset):
+    """Verify the shapes of dataset samples"""
+    sample_waveform, sample_label = dataset[0]
+    print(f"Sample waveform shape: {sample_waveform.shape}")
+    print(f"Sample label shape: {sample_label.shape}")
+    print(f"Fixed length should be: {dataset.fixed_length}")
+    
+    # Check if the shape is exactly [fixed_length]
+    expected_shape = torch.Size([dataset.fixed_length])
+    is_correct = sample_waveform.shape == expected_shape
+    
+    if not is_correct:
+        print(f"ERROR: Expected shape {expected_shape}, got {sample_waveform.shape}")
+    else:
+        print("Shape verification passed!")
+    
+    return is_correct
+
+# In main execution:
