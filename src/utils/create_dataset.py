@@ -7,10 +7,11 @@ from pydub import AudioSegment
 import numpy as np
 
 class DatasetCreator:
-    def __init__(self, output_dir: str = 'data'):
+    def __init__(self, output_dir: str = 'data', sample_rate: int = 16000):
         self.output_dir = Path(output_dir)
         self.real_dir = self.output_dir / 'real'
         self.fake_dir = self.output_dir / 'fake'
+        self.sample_rate = sample_rate
         
         # Create directories
         self.real_dir.mkdir(parents=True, exist_ok=True)
@@ -21,12 +22,13 @@ class DatasetCreator:
         tts = gTTS(text=text, lang='en')
         output_path = self.real_dir / f"{filename}.wav"
         
-        # Save as MP3 first (gTTS limitation)
+        # Save as MP3 first
         temp_mp3 = self.real_dir / f"{filename}_temp.mp3"
         tts.save(str(temp_mp3))
         
-        # Convert to WAV
+        # Convert to WAV with specific sample rate
         audio = AudioSegment.from_mp3(str(temp_mp3))
+        audio = audio.set_frame_rate(self.sample_rate)
         audio.export(str(output_path), format="wav")
         
         # Remove temporary MP3
@@ -35,27 +37,21 @@ class DatasetCreator:
         return str(output_path)
     
     def create_fake_sample(self, audio_path: str, filename: str):
-        """Create a fake sample by applying various modifications"""
+        """Create a fake sample by applying modifications"""
         audio = AudioSegment.from_wav(audio_path)
         
-        # Apply random modifications
-        modifications = np.random.choice([
-            'pitch_shift',
-            'speed_change',
-            'both'
-        ])
+        # Ensure consistent sample rate
+        audio = audio.set_frame_rate(self.sample_rate)
         
-        if modifications in ['pitch_shift', 'both']:
-            audio = audio._spawn(audio.raw_data, overrides={
-                "frame_rate": int(audio.frame_rate * np.random.uniform(0.8, 1.2))
-            })
-            
-        if modifications in ['speed_change', 'both']:
-            audio = audio.speedup(playback_speed=np.random.uniform(1.1, 1.3))
+        # Apply modifications
+        modified = audio._spawn(audio.raw_data, overrides={
+            "frame_rate": int(audio.frame_rate * 1.2)
+        })
+        modified = modified.set_frame_rate(self.sample_rate)
         
         # Save fake sample
         output_path = self.fake_dir / f"{filename}.wav"
-        audio.export(str(output_path), format="wav")
+        modified.export(str(output_path), format="wav")
         return str(output_path)
 
 def create_sample_dataset(size=50):
