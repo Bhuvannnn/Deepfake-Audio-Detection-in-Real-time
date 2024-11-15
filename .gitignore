@@ -1,0 +1,140 @@
+# Python
+__pycache__/
+*.pyc
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+virtualenv/
+.env.local
+.env.*.local
+.python-version
+pip-selfcheck.json
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IDE - PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea_modules/
+
+# IDE - Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+jupyter_notebook_config.py
+
+# Project specific - Data
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Project specific - Models
+models/*
+!models/.gitkeep
+saved_models/
+checkpoints/
+
+# Project specific - Audio files
+# Only ignore audio files in data directories
+data/**/*.wav
+data/**/*.mp3
+data/**/*.flac
+data/**/*.aac
+data/**/*.m4a
+data/**/*.ogg
+data/**/*.wma
+data/**/*.aiff
+data/**/*.aifc
+data/**/*.sph
+
+# Project specific - Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Project specific - Logs
+logs/
+*.log
+log.txt
+*.log.*
+wandb/
+runs/
+tensorboard/
+
+# Project specific - Cache
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.coveragerc
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Keep source code files
+!src/**/*.py
+!notebooks/**/*.ipynb
+!tests/**/*.py
+!*.py
+!*.ipynb
+
+# Large model files
+models/*.pth
+models/*.pt
+models/*.bin
+models/*.onnx
+models/*.tflite
+models/*.pb
+
+# Keep configs and documentation
+!requirements.txt
+!setup.py
+!README.md
+!LICENSE
+!.gitattributes
+!.gitignore

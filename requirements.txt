@@ -1,0 +1,25 @@
+# Core ML
+torch
+torchaudio
+transformers
+librosa
+numpy
+pandas
+scikit-learn
+
+# Audio processing
+soundfile
+pyaudioanalysis
+pydub
+
+# API and Interface
+fastapi
+uvicorn
+streamlit
+python-multipart
+
+# Development
+jupyter
+pytest
+black
+flake8
