@@ -5,7 +5,7 @@ import torchaudio
 import numpy as np
 
 class AudioDataset(Dataset):
-    def __init__(self, data_dir: str, max_duration: int = 3):
+    def __init__(self, data_dir: str, duration: int):
         """
         Args:
             data_dir: Directory containing 'real' and 'fake' subdirectories
@@ -13,7 +13,7 @@ class AudioDataset(Dataset):
         """
         self.data_dir = Path(data_dir)
         self.sample_rate = 16000  # Fixed sample rate
-        self.max_length = self.sample_rate * max_duration  # Convert seconds to samples
+        self.max_length = self.sample_rate * duration  # Convert seconds to samples
         
         # Get file paths
         self.real_files = list(Path(self.data_dir / 'real').glob('*.wav'))
