@@ -14,7 +14,7 @@ class AudioDataset(Dataset):
         self.data_dir = Path(data_dir)
         self.transform = transform
         self.sample_rate = 16000  # Fixed sample rate
-        self.max_length = self.sample_rate * 3  # 3 seconds fixed duration
+        self.fixed_length = 32000  # Exactly 2 seconds (16000 * 2)
         
         # Get file paths
         self.real_files = list(Path(self.data_dir / 'real').glob('*.wav'))
@@ -42,20 +42,28 @@ class AudioDataset(Dataset):
                 )
                 waveform = resampler(waveform)
             
-            # Handle length
-            if waveform.shape[1] > self.max_length:
-                # Take center section
-                start = (waveform.shape[1] - self.max_length) // 2
-                waveform = waveform[:, start:start + self.max_length]
+            # Ensure fixed length by either padding or trimming
+            current_length = waveform.shape[1]
+            
+            if current_length > self.fixed_length:
+                # Take the center part if too long
+                start = (current_length - self.fixed_length) // 2
+                waveform = waveform[:, start:start + self.fixed_length]
             else:
-                # Pad with zeros
-                padding_length = self.max_length - waveform.shape[1]
+                # Pad with zeros if too short
+                padding_length = self.fixed_length - current_length
+                padding_left = padding_length // 2
+                padding_right = padding_length - padding_left
                 waveform = torch.nn.functional.pad(
-                    waveform, 
-                    (0, padding_length),
+                    waveform,
+                    (padding_left, padding_right),
                     mode='constant',
                     value=0
                 )
+            
+            # Verify the length
+            assert waveform.shape[1] == self.fixed_length, \
+                f"Waveform length {waveform.shape[1]} does not match fixed length {self.fixed_length}"
             
             # Normalize
             waveform = waveform / (torch.max(torch.abs(waveform)) + 1e-8)
@@ -64,16 +72,27 @@ class AudioDataset(Dataset):
             
         except Exception as e:
             print(f"Error loading {file_path}: {str(e)}")
-            return torch.zeros(1, self.max_length, dtype=torch.float32)
+            # Return zeros with the correct fixed length
+            return torch.zeros(1, self.fixed_length, dtype=torch.float32)
     
     def __getitem__(self, idx):
         file_path, label = self.files[idx]
-        waveform = self.load_audio(file_path)
-        
-        if self.transform:
-            waveform = self.transform(waveform)
+        try:
+            waveform = self.load_audio(file_path)
             
-        return waveform, torch.tensor(label, dtype=torch.long)
+            # Double-check the shape
+            if waveform.shape[1] != self.fixed_length:
+                print(f"Warning: Incorrect length {waveform.shape[1]} for {file_path}")
+                waveform = torch.zeros(1, self.fixed_length, dtype=torch.float32)
+            
+            if self.transform:
+                waveform = self.transform(waveform)
+                
+            return waveform, torch.tensor(label, dtype=torch.long)
+            
+        except Exception as e:
+            print(f"Error processing {file_path}: {str(e)}")
+            return torch.zeros(1, self.fixed_length, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
     
     def __len__(self):
         return len(self.files)
