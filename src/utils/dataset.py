@@ -5,16 +5,16 @@ import torchaudio
 import numpy as np
 
 class AudioDataset(Dataset):
-    def __init__(self, data_dir: str, duration: int):
+    def __init__(self, data_dir: str, transform=None):
         """
         Args:
             data_dir: Directory containing 'real' and 'fake' subdirectories
-            max_duration: Maximum duration in seconds for audio clips
+            transform: Optional transform to be applied on a sample
         """
         self.data_dir = Path(data_dir)
-        self.duration = duration
+        self.transform = transform
         self.sample_rate = 16000  # Fixed sample rate
-        self.max_length = self.sample_rate * duration  # Convert seconds to samples
+        self.max_length = self.sample_rate * 3  # 3 seconds fixed duration
         
         # Get file paths
         self.real_files = list(Path(self.data_dir / 'real').glob('*.wav'))
@@ -69,6 +69,10 @@ class AudioDataset(Dataset):
     def __getitem__(self, idx):
         file_path, label = self.files[idx]
         waveform = self.load_audio(file_path)
+        
+        if self.transform:
+            waveform = self.transform(waveform)
+            
         return waveform, torch.tensor(label, dtype=torch.long)
     
     def __len__(self):
